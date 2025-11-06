@@ -16,6 +16,9 @@
     - Add policy for public access (no auth required as per requirements)
 */
 
+-- Ensure pgcrypto is available for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE TABLE IF NOT EXISTS files (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -33,3 +36,8 @@ CREATE POLICY "Public access to files"
   FOR ALL
   USING (true)
   WITH CHECK (true);
+
+-- Push the changes to the database
+supabase db push
+
+psql -h your_host -U your_user -d your_db -f "c:\Users\ASUS\Desktop\practical-1\supabase\migrations\20250508105007_odd_base.sql"
