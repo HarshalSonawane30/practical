@@ -2,10 +2,21 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { createClient } from '@supabase/supabase-js';
 import { StoredFile } from '../types/file';
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  // Provide a clear runtime message instead of letting createClient throw an uncaught error
+  // This allows the app to render and show a helpful hint in the console.
+  // Create a minimal mock so calls fail gracefully below.
+  console.error(
+    'Missing Supabase configuration. Please create a `.env.local` with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  );
+}
+
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 interface FileUploadContextType {
   files: StoredFile[];
@@ -39,13 +50,14 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const { data, error } = await supabase
-          .from('files')
-          .select('*');
-
-        if (error) {
-          throw error;
+        if (!supabase) {
+          console.warn('Supabase client not initialized; skipping fetchFiles.');
+          return;
         }
+
+        const { data, error } = await supabase.from('files').select('*');
+
+        if (error) throw error;
 
         if (data) {
           setFiles(data);
@@ -66,6 +78,9 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
 
   const uploadFiles = async (newFiles: File[]) => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
+      }
       const filePromises = newFiles.map((file) => {
         return new Promise<StoredFile>((resolve, reject) => {
           const reader = new FileReader();
@@ -110,6 +125,10 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
 
   const deleteFile = async (id: string) => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
+      }
+
       // Prevent deletion if file is stored (pinned)
       const existing = files.find(f => f.id === id);
       if (existing && existing.stored) {
@@ -132,6 +151,10 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
 
   const toggleStore = async (id: string, stored: boolean) => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local');
+      }
+
       const { error, data } = await supabase
         .from('files')
         .update({ stored })
