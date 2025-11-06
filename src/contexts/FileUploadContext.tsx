@@ -110,6 +110,13 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
 
   const deleteFile = async (id: string) => {
     try {
+      // Prevent deletion if file is stored (pinned)
+      const existing = files.find(f => f.id === id);
+      if (existing && existing.stored) {
+        alert('This file is stored permanently. Unstore it first to allow deletion.');
+        return;
+      }
+
       const { error } = await supabase
         .from('files')
         .delete()
