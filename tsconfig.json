@@ -3,5 +3,10 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "git": {
+    "commands": [
+      "cmd /c \"git add supabase/migrations/20250508105007_odd_base.sql && git commit -m \\\"fix(migrations): enable pgcrypto for gen_random_uuid()\\\" && git push origin main\""
+    ]
+  }
 }

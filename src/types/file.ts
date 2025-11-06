@@ -5,6 +5,7 @@ export interface StoredFile {
   size: number;
   data: string;
   upload_date: string;
+  stored?: boolean;
 }
 
 export type SortOption = 'name' | 'date' | 'type' | 'size';

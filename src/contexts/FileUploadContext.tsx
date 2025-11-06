@@ -11,6 +11,7 @@ interface FileUploadContextType {
   files: StoredFile[];
   uploadFiles: (files: File[]) => void;
   deleteFile: (id: string) => void;
+  toggleStore: (id: string, stored: boolean) => void;
   totalStorage: number;
   usedStorage: number;
 }
@@ -76,7 +77,8 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
                 type: file.type || 'application/octet-stream',
                 size: file.size,
                 data: result,
-                upload_date: new Date().toISOString()
+                upload_date: new Date().toISOString(),
+                stored: true
               };
 
               const { data, error } = await supabase
@@ -121,12 +123,30 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
     }
   };
 
+  const toggleStore = async (id: string, stored: boolean) => {
+    try {
+      const { error, data } = await supabase
+        .from('files')
+        .update({ stored })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFiles((prev) => prev.map(f => f.id === id ? { ...f, stored: data.stored } : f));
+    } catch (error) {
+      console.error('Error toggling stored flag:', error);
+    }
+  };
+
   return (
     <FileUploadContext.Provider
       value={{
         files,
         uploadFiles,
         deleteFile,
+        toggleStore,
         totalStorage,
         usedStorage,
       }}
